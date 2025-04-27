@@ -1,0 +1,142 @@
+[
+  {
+    "@context": "http://www.w3.org/ns/anno.jsonld",
+    "type": "Annotation",
+    "body": [
+      {
+        "type": "TextualBody",
+        "value": "asdfsadf",
+        "purpose": "commenting"
+      },
+      {
+        "type": "TextualBody",
+        "value": "f",
+        "purpose": "tagging"
+      }
+    ],
+    "target": {
+      "selector": [
+        {
+          "type": "TextQuoteSelector",
+          "exact": "paragraph"
+        },
+        {
+          "type": "TextPositionSelector",
+          "start": 35,
+          "end": 44
+        }
+      ]
+    },
+    "id": "#f15d5aad-44b0-43cc-b68f-4bcb99d17aee",
+    "creator": {
+      "type": "Person",
+      "name": "admin"
+    },
+    "version": "2025-04-27T17:19:59.585Z"
+  },
+  {
+    "@context": "http://www.w3.org/ns/anno.jsonld",
+    "type": "Annotation",
+    "body": [
+      {
+        "type": "TextualBody",
+        "value": "asdfasdf",
+        "purpose": "commenting"
+      },
+      {
+        "type": "TextualBody",
+        "value": "f",
+        "purpose": "tagging"
+      }
+    ],
+    "target": {
+      "selector": [
+        {
+          "type": "TextQuoteSelector",
+          "exact": "ent that you can highlight and comme"
+        },
+        {
+          "type": "TextPositionSelector",
+          "start": 59,
+          "end": 95
+        }
+      ]
+    },
+    "id": "#c99bf148-d435-4c1f-872d-10c43620c4d9",
+    "creator": {
+      "type": "Person",
+      "name": "admin"
+    },
+    "version": "2025-04-27T17:21:16.031Z"
+  },
+  {
+    "@context": "http://www.w3.org/ns/anno.jsonld",
+    "type": "Annotation",
+    "body": [
+      {
+        "type": "TextualBody",
+        "value": "asdfasdff",
+        "purpose": "commenting"
+      },
+      {
+        "type": "TextualBody",
+        "value": "ffff",
+        "purpose": "tagging"
+      }
+    ],
+    "target": {
+      "selector": [
+        {
+          "type": "TextQuoteSelector",
+          "exact": "Another paragraph to demonstrate multiple annotations across different sections of the content."
+        },
+        {
+          "type": "TextPositionSelector",
+          "start": 164,
+          "end": 259
+        }
+      ]
+    },
+    "id": "#6ea1e887-45e4-45c9-99a6-e6fecfdcc873",
+    "creator": {
+      "type": "Person",
+      "name": "admin"
+    },
+    "version": "2025-04-27T17:24:17.447Z"
+  },
+  {
+    "@context": "http://www.w3.org/ns/anno.jsonld",
+    "type": "Annotation",
+    "body": [
+      {
+        "type": "TextualBody",
+        "value": "asdfasdfasdf",
+        "purpose": "commenting"
+      },
+      {
+        "type": "TextualBody",
+        "value": "f",
+        "purpose": "tagging"
+      }
+    ],
+    "target": {
+      "selector": [
+        {
+          "type": "TextQuoteSelector",
+          "exact": "This is a sample paragraph with some content that you can highlight and comment on. Try selecting different parts of this text to add annotatio"
+        },
+        {
+          "type": "TextPositionSelector",
+          "start": 18,
+          "end": 161
+        }
+      ]
+    },
+    "id": "#743da8fb-c3c5-4d52-8e81-6b53e7b8dfc3",
+    "creator": {
+      "type": "Person",
+      "name": "admin"
+    },
+    "version": "2025-04-27T17:24:44.078Z"
+  }
+]

@@ -1,0 +1,20 @@
+#version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DJANGO_SECRET_KEY=your-secret-key-change-me
+      - DEBUG=True
+    volumes:
+      - ./templates:/app/templates
+      - ./annotations:/app/annotations
+      - ./project:/app/project
+      - ./annotations.db:/app/annotations.db
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn --worker-class sync --bind 0.0.0.0:8000 project.wsgi:application"
+    ports:
+      - "8000:8000"

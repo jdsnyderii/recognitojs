@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecogitoJS Annotations with SQLite</title>
+    <link href="https://cdn.jsdelivr.net/npm/@recogito/recogito-js@1.8.2/dist/recogito.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@recogito/recogito-js@1.8.2/dist/recogito.min.js"></script>
+    <style>
+        :root[data-theme="light"] {
+            --background: #ffffff;
+            --text: #333333;
+            --sidebar-bg: #f5f5f5;
+            --button-bg: #3f51b5;
+            --button-text: #ffffff;
+            --highlight-bg: rgba(76, 175, 80, 0.3);
+            --highlight-active-bg: rgba(76, 175, 80, 0.4);
+            --highlight-border: #4caf50;
+            --card-bg: #e6f3ff;
+            --card-hover: #d1e7ff;
+            --overlay-bg: rgba(0, 0, 0, 0.5);
+        }
+        :root[data-theme="dark"] {
+            --background: #121212;
+            --text: #e0e0e0;
+            --sidebar-bg: #1e1e1e;
+            --button-bg: #4caf50;
+            --button-text: #ffffff;
+            --highlight-bg: rgba(76, 175, 80, 0.4);
+            --highlight-active-bg: rgba(76, 175, 80, 0.5);
+            --highlight-border: #66bb6a;
+            --card-bg: #263238;
+            --card-hover: #37474f;
+            --overlay-bg: rgba(0, 0, 0, 0.7);
+        }
+        body {
+            display: flex;
+            font-family: 'Nunito Sans', sans-serif;
+            margin: 0;
+            padding: 24px;
+            background: var(--background);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+        }
+        #content {
+            flex: 1;
+            max-width: 70%;
+            padding: 24px;
+            background: var(--background);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        #content.no-highlights .r6o-annotation {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        #content.no-highlights .r6o-annotation.active-highlight {
+            background: var(--highlight-active-bg) !important;
+            border: 1px solid var(--highlight-border) !important;
+        }
+        .r6o-annotation {
+            background: var(--highlight-bg);
+            border-radius: 4px;
+        }
+        #sidebar {
+            width: 25%;
+            min-width: 200px;
+            padding: 24px;
+            background: var(--sidebar-bg);
+            border-radius: 8px;
+            position: fixed;
+            right: 24px;
+            top: 24px;
+            bottom: 24px;
+            overflow-y: auto;
+            transition: transform 0.3s ease, background 0.3s;
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        #sidebar.hidden {
+            transform: translateX(100%);
+        }
+        #sidebar-toggle-container {
+            position: fixed;
+            right: 24px;
+            top: 24px;
+            z-index: 3;
+        }
+        #sidebar-toggle {
+            padding: 8px 16px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 4px 0 0 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 700;
+            transition: transform 0.2s, background 0.3s;
+        }
+        #sidebar-toggle:hover {
+            transform: scale(1.05);
+        }
+        .annotation-comment {
+            margin-bottom: 16px;
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+        .annotation-comment:hover {
+            background: var(--card-hover);
+            transform: translateY(-2px);
+        }
+        .annotation-comment .quote {
+            font-style: italic;
+            color: var(--text);
+            opacity: 0.7;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        .annotation-comment .comment {
+            font-weight: 700;
+            font-size: 1em;
+        }
+        .annotation-comment .creator {
+            font-size: 0.8em;
+            color: var(--text);
+            opacity: 0.6;
+            margin-top: 8px;
+        }
+        #controls {
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        #controls button, #controls input, #controls select, #controls a {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: var(--button-bg);
+            color: var(--button-text);
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 700;
+            transition: transform 0.2s, background 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+        #controls button:hover, #controls input:hover, #controls select:hover, #controls a:hover {
+            transform: scale(1.05);
+        }
+        #user-display {
+            background: var(--background);
+            color: var(--text);
+            border: 1px solid var(--text);
+            width: 150px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        #user-filter {
+            width: 200px;
+            height: 80px;
+            background: var(--background);
+            color: var(--text);
+        }
+        #theme-toggle {
+            background: var(--button-bg);
+            color: var(--button-text);
+        }
+        #instructions-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+        }
+        #instructions-overlay.hidden {
+            display: none;
+        }
+        #instructions-content {
+            background: var(--background);
+            padding: 24px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            color: var(--text);
+        }
+        #instructions-content h2 {
+            margin-top: 0;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        #instructions-content p {
+            margin: 12px 0;
+            line-height: 1.6;
+            font-size: 0.9em;
+        }
+        #instructions-content button {
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 700;
+            transition: transform 0.2s;
+        }
+        #instructions-content button:hover {
+            transform: scale(1.05);
+        }
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                padding: 16px;
+            }
+            #content {
+                max-width: 100%;
+                margin-bottom: 16px;
+            }
+            #sidebar {
+                position: static;
+                width: 100%;
+                margin-top: 16px;
+                transform: none;
+                right: 0;
+                top: 0;
+            }
+            #sidebar.hidden {
+                display: none;
+            }
+            #sidebar-toggle-container {
+                position: static;
+                margin-bottom: 16px;
+            }
+            #sidebar-toggle {
+                width: 100%;
+                border-radius: 4px;
+            }
+            #instructions-content {
+                width: 95%;
+                padding: 16px;
+            }
+            #controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+            #user-display, #user-filter {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="content">
+    <p>Text to annotate. This is a sample paragraph with some content that you can highlight and comment on. Try selecting different parts of this text to add annotations.</p>
+    <p>Another paragraph to demonstrate multiple annotations across different sections of the content.</p>
+</div>
+<div id="sidebar-toggle-container">
+    <button id="sidebar-toggle">Close</button>
+</div>
+<div id="sidebar">
+    <div id="controls">
+        <span id="user-display">Logged in as: {{ current_user }}</span>
+        <a href="{% url 'logout' %}">Logout</a>
+        <select id="user-filter" multiple>
+            <option value="">All Users</option>
+        </select>
+        <button onclick="clearAnnotations()">Clear Annotations</button>
+        <button onclick="refreshAnnotations()">Refresh Annotations</button>
+        <button onclick="exportAnnotations()">Export Annotations</button>
+        <input type="file" id="importAnnotations" accept=".json">
+        <button id="theme-toggle">Toggle Theme</button>
+        <button id="instructions-button">Show Instructions</button>
+    </div>
+    <div id="annotation-list"></div>
+</div>
+<div id="instructions-overlay" class="hidden">
+    <div id="instructions-content">
+        <h2>Annotation Instructions</h2>
+        <p><strong>Create Annotations:</strong> Select text in the main content and type a comment to save it. Your username ({{ current_user }}) will be associated with the annotation.</p>
+        <p><strong>Highlighting:</strong> When the sidebar is closed, all annotations are highlighted in green. When open, no highlights show unless you toggle one.</p>
+        <p><strong>Toggling Highlights:</strong> Click an annotation in the sidebar to show its highlight in the text. Click again to hide it. Only one annotation can be highlighted at a time.</p>
+        <p><strong>Other Features:</strong> Use the user filter to view specific users' annotations, refresh to sync changes, clear all annotations, toggle light/dark mode, or export/import them as JSON.</p>
+        <button onclick="document.getElementById('instructions-overlay').classList.add('hidden')">Close</button>
+    </div>
+</div>
+<script>
+    // Utility to get CSRF token from cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Canonicalize URL
+    function getCanonicalPermalink() {
+        const origin = window.location.origin || 'http://localhost:8000';
+        const pathname = window.location.pathname || '/';
+        const permalink = `${origin}${pathname}`.replace(/\/+$/, '') + '/';
+        console.log('Generated permalink:', permalink);
+        return permalink;
+    }
+
+    // Initialize RecogitoJS
+    const r = Recogito.init({
+        content: document.getElementById('content'),
+        mode: 'ANNOTATION',
+        formatter: (annotation) => {
+            return { className: 'r6o-annotation' };
+        }
+    });
+
+    // State variables
+    const currentUser = '{{ current_user }}';
+    let selectedAnnotationId = null;
+    let isSidebarVisible = localStorage.getItem('sidebarVisible') !== 'false';
+    const sidebar = document.getElementById('sidebar');
+    const toggleButton = document.getElementById('sidebar-toggle');
+    const content = document.getElementById('content');
+    const instructionsButton = document.getElementById('instructions-button');
+    const instructionsOverlay = document.getElementById('instructions-overlay');
+    const themeToggle = document.getElementById('theme-toggle');
+    updateSidebarVisibility();
+
+    // Theme toggle
+    function toggleTheme() {
+        const html = document.documentElement;
+        const newTheme = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        themeToggle.textContent = newTheme === 'light' ? 'Toggle Dark Mode' : 'Toggle Light Mode';
+    }
+
+    // Initialize theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    themeToggle.textContent = savedTheme === 'light' ? 'Toggle Dark Mode' : 'Toggle Light Mode';
+    themeToggle.addEventListener('click', toggleTheme);
+
+    // Toggle sidebar
+    function toggleSidebar() {
+        isSidebarVisible = !isSidebarVisible;
+        selectedAnnotationId = null;
+        instructionsOverlay.classList.add('hidden');
+        localStorage.setItem('sidebarVisible', isSidebarVisible);
+        updateSidebarVisibility();
+    }
+
+    // Update sidebar visibility and highlights
+    function updateSidebarVisibility() {
+        if (isSidebarVisible) {
+            sidebar.classList.remove('hidden');
+            toggleButton.textContent = 'Close';
+            content.classList.add('no-highlights');
+            if (selectedAnnotationId) {
+                const activeSpan = document.querySelector(`#content .r6o-annotation[data-id="${selectedAnnotationId}"]`);
+                if (activeSpan) activeSpan.classList.add('active-highlight');
+            }
+        } else {
+            sidebar.classList.add('hidden');
+            toggleButton.textContent = 'Annotate';
+            content.classList.remove('no-highlights');
+            document.querySelectorAll('#content .r6o-annotation.active-highlight').forEach(span => {
+                span.classList.remove('active-highlight');
+            });
+        }
+    }
+
+    // Handle toggle button
+    toggleButton.addEventListener('click', toggleSidebar);
+
+    // Handle instructions
+    instructionsButton.addEventListener('click', () => {
+        instructionsOverlay.classList.remove('hidden');
+    });
+
+    // Fetch annotations from backend
+    async function fetchAnnotations() {
+        const permalink = getCanonicalPermalink();
+        const response = await fetch(`/api/annotations/?permalink=${encodeURIComponent(permalink)}`);
+        if (!response.ok) throw new Error(`Failed to fetch annotations: ${response.status}`);
+        const annotations = await response.json();
+        console.log('Fetched annotations:', annotations);
+        return annotations;
+    }
+
+    // Load annotations
+    async function loadAnnotations() {
+        try {
+            const annotations = await fetchAnnotations();
+            r.setAnnotations(annotations);
+            updateSidebar(annotations);
+            updateUserFilter(annotations);
+            console.log('Loaded annotations:', annotations);
+        } catch (error) {
+            console.error('Error loading annotations:', error);
+            alert('Failed to load annotations from server.');
+        }
+    }
+
+    // Save annotation
+    async function saveAnnotation(annotation) {
+        if (!currentUser) {
+            alert('You must be logged in to create annotations.');
+            return;
+        }
+        try {
+            const permalink = getCanonicalPermalink();
+            const version = new Date().toISOString();
+            const updatedAnnotation = {
+                ...annotation,
+                id: annotation.id || crypto.randomUUID(), // Ensure ID is set
+                creator: {
+                    type: 'Person',
+                    name: currentUser
+                },
+                version: version
+            };
+
+            const request = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ user: currentUser, permalink, annotation: updatedAnnotation })
+            };
+            console.error('Save Request Is:', request);
+            const response = await fetch('/api/annotations/', request);
+
+            if (!response.ok) {
+                console.error('Save Response Bad;', response);
+                const error = await response.json();
+                if (error.detail?.includes('conflict')) {
+                    alert('Annotation was updated by another user. Please refresh.');
+                    return;
+                }
+                throw new Error(`Failed to save annotation: ${response.status}`);
+            }
+
+            const annotations = await fetchAnnotations();
+            r.setAnnotations(annotations);
+            updateSidebar(annotations);
+            updateUserFilter(annotations);
+            console.log('Annotation saved:', updatedAnnotation);
+        } catch (error) {
+            console.error('Error saving annotation:', error);
+            alert('Failed to save annotation to server.');
+        }
+    }
+
+    // Update user filter
+    function updateUserFilter(annotations) {
+        const userFilter = document.getElementById('user-filter');
+        const creators = [...new Set(annotations.map(a => a.creator?.name || 'Unknown'))];
+        const allUsersOption = '<option value="">All Users</option>';
+        const options = creators.map(creator => `<option value="${creator}">${creator}</option>`).join('');
+        userFilter.innerHTML = allUsersOption + options;
+    }
+
+    // Update sidebar
+    function updateSidebar(annotations) {
+        const list = document.getElementById('annotation-list');
+        const userFilter = document.getElementById('user-filter');
+        const selectedUsers = Array.from(userFilter.selectedOptions).map(option => option.value);
+        const filteredAnnotations = selectedUsers.length === 0 || selectedUsers.includes('')
+            ? annotations
+            : annotations.filter(a => selectedUsers.includes(a.creator?.name || 'Unknown'));
+        list.innerHTML = '';
+        filteredAnnotations.forEach(annotation => {
+            console.log('Processing annotation:', annotation);
+            let comment = 'No comment';
+            if (Array.isArray(annotation.body)) {
+                const commentBody = annotation.body.find(b => b.purpose === 'commenting');
+                comment = commentBody?.value || comment;
+            } else if (annotation.body && typeof annotation.body === 'object') {
+                comment = annotation.body.value || comment;
+            }
+            let quote = 'No quote';
+            if (annotation.target?.selector) {
+                const quoteSelector = Array.isArray(annotation.target.selector)
+                    ? annotation.target.selector.find(s => s.type === 'TextQuoteSelector')
+                    : annotation.target.selector;
+                quote = quoteSelector?.exact || quote;
+            }
+            let creator = 'Unknown';
+            if (annotation.creator) {
+                creator = annotation.creator.name || creator;
+            } else if (annotation.user) {
+                creator = annotation.user;
+            }
+            const div = document.createElement('div');
+            div.className = 'annotation-comment';
+            div.dataset.annotationId = annotation.id;
+            div.innerHTML = `
+                <div class="quote">${quote}</div>
+                <div class="comment">${comment}</div>
+                <div class="creator">By: ${creator}</div>
+            `;
+            const position = getAnnotationPosition(annotation);
+            div.style.marginTop = `${position}px`;
+            div.addEventListener('click', () => {
+                if (isSidebarVisible) {
+                    selectedAnnotationId = selectedAnnotationId === annotation.id ? null : annotation.id;
+                    document.querySelectorAll('#content .r6o-annotation.active-highlight').forEach(span => {
+                        span.classList.remove('active-highlight');
+                    });
+                    if (selectedAnnotationId) {
+                        const activeSpan = document.querySelector(`#content .r6o-annotation[data-id="${selectedAnnotationId}"]`);
+                        if (activeSpan) activeSpan.classList.add('active-highlight');
+                    }
+                }
+            });
+            list.appendChild(div);
+        });
+    }
+
+    // Estimate annotation position
+    function getAnnotationPosition(annotation) {
+        const selector = annotation.target?.selector?.find(s => s.type === 'TextPositionSelector') ||
+                        (Array.isArray(annotation.target?.selector) ? null : annotation.target?.selector);
+        if (selector && selector.start != null) {
+            const range = document.createRange();
+            const content = document.getElementById('content');
+            let charCount = 0;
+            let found = false;
+            for (let node of content.childNodes) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    if (charCount + node.length >= selector.start) {
+                        range.setStart(node, selector.start - charCount);
+                        range.setEnd(node, selector.start - charCount);
+                        found = true;
+                        break;
+                    }
+                    charCount += node.length;
+                }
+            }
+            if (found) {
+                const rect = range.getBoundingClientRect();
+                const contentRect = content.getBoundingClientRect();
+                return rect.top - contentRect.top + content.scrollTop;
+            }
+        }
+        return 0;
+    }
+
+    // Clear annotations
+    async function clearAnnotations() {
+        try {
+            const permalink = getCanonicalPermalink();
+            const response = await fetch('/api/annotations/delete_by_permalink/', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ permalink })
+            });
+            if (!response.ok) throw new Error('Failed to clear annotations from server');
+            r.setAnnotations([]);
+            const highlights = document.querySelectorAll('#content .r6o-annotation');
+            highlights.forEach(span => {
+                const parent = span.parentNode;
+                while (span.firstChild) {
+                    parent.insertBefore(span.firstChild, span);
+                }
+                parent.removeChild(span);
+            });
+            selectedAnnotationId = null;
+            instructionsOverlay.classList.add('hidden');
+            updateSidebar([]);
+            updateUserFilter([]);
+            console.log('Annotations cleared');
+        } catch (error) {
+            console.error('Error clearing annotations:', error);
+            alert('Failed to clear annotations from server.');
+        }
+    }
+
+    // Refresh annotations
+    async function refreshAnnotations() {
+        try {
+            const annotations = await fetchAnnotations();
+            r.setAnnotations(annotations);
+            updateSidebar(annotations);
+            updateUserFilter(annotations);
+            console.log('Annotations refreshed');
+        } catch (error) {
+            console.error('Error refreshing annotations:', error);
+            alert('Failed to refresh annotations from server.');
+        }
+    }
+
+    // Export annotations
+    async function exportAnnotations() {
+        try {
+            const annotations = await fetchAnnotations();
+            const blob = new Blob([JSON.stringify(annotations)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'annotations.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log('Annotations exported');
+        } catch (error) {
+            console.error('Error exporting annotations:', error);
+            alert('Failed to export annotations.');
+        }
+    }
+
+    // Import annotations
+    document.getElementById('importAnnotations').addEventListener('change', async (event) => {
+        if (!currentUser) {
+            alert('You must be logged in to import annotations.');
+            return;
+        }
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const annotations = JSON.parse(e.target.result);
+                    const permalink = getCanonicalPermalink();
+                    for (const annotation of annotations) {
+                        const version = new Date().toISOString();
+                        const updatedAnnotation = {
+                            ...annotation,
+                            id: annotation.id || crypto.randomUUID(), // Ensure ID is set
+                            creator: { type: 'Person', name: currentUser },
+                            version: version
+                        };
+                        const response = await fetch('/api/annotations/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({ user: currentUser, permalink, annotation: updatedAnnotation })
+                        });
+                        if (!response.ok) throw new Error('Failed to import annotation');
+                    }
+                    const updatedAnnotations = await fetchAnnotations();
+                    r.setAnnotations(updatedAnnotations);
+                    selectedAnnotationId = null;
+                    updateSidebar(updatedAnnotations);
+                    updateUserFilter(updatedAnnotations);
+                    console.log('Imported annotations:', annotations);
+                } catch (error) {
+                    console.error('Error importing annotations:', error);
+                    alert('Failed to import annotations.');
+                }
+            };
+            reader.readAsText(file);
+        }
+    });
+
+    // Handle filter changes
+    document.getElementById('user-filter').addEventListener('change', async () => {
+        const annotations = await fetchAnnotations();
+        updateSidebar(annotations);
+    });
+
+    // Handle annotation events
+    r.on('createAnnotation', saveAnnotation);
+    r.on('updateAnnotation', async (annotation) => {
+        if (!currentUser) {
+            alert('You must be logged in to update annotations.');
+            return;
+        }
+        try {
+            const permalink = getCanonicalPermalink();
+            const version = new Date().toISOString();
+            const updatedAnnotation = {
+                ...annotation,
+                creator: { type: 'Person', name: currentUser },
+                version: version
+            };
+            console.error('UpdateAnnotation is:', updatedAnnotation);
+
+            const response = await fetch(`/api/annotations/${annotation.id}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ user: currentUser, permalink, annotation: updatedAnnotation })
+            });
+            if (!response.ok) throw new Error('Failed to update annotation');
+            const annotations = await fetchAnnotations();
+            r.setAnnotations(annotations);
+            updateSidebar(annotations);
+            updateUserFilter(annotations);
+            console.log('Annotation updated:', updatedAnnotation);
+        } catch (error) {
+            console.error('Error updating annotation:', error);
+            alert('Failed to update annotation.');
+        }
+    });
+    r.on('deleteAnnotation', async (annotation) => {
+        if (!currentUser) {
+            alert('You must be logged in to delete annotations.');
+            return;
+        }
+        try {
+            console.log('Annotation object:', JSON.stringify(annotation, null, 2)); // Debug
+            if (!annotation || !annotation.id || typeof annotation.id !== 'string') {
+                console.error('Invalid annotation ID:', annotation?.id);
+                throw new Error('Annotation ID is missing or invalid');
+            }
+            const permalink = getCanonicalPermalink();
+            if (!permalink) {
+                throw new Error('Permalink is missing or invalid');
+            }
+            const csrfToken = getCookie('csrftoken');
+            if (!csrfToken) {
+                throw new Error('CSRF token is missing');
+            }
+            const deleteUrl = `/api/annotations/${encodeURIComponent(annotation.id)}/delete/`;
+            console.log('Deleting annotation:', { id: annotation.id, permalink, user: currentUser, url: deleteUrl });
+            console.log('Request body:', JSON.stringify({ user: currentUser, permalink }));
+            const response = await fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ user: currentUser, permalink })
+            });
+            if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch {
+                    errorData = { error: 'Unknown server error' };
+                }
+                console.error('Delete response:', { status: response.status, errorData });
+                throw new Error(`Failed to delete annotation: ${response.status} - ${JSON.stringify(errorData)}`);
+            }
+            const annotations = await fetchAnnotations();
+            r.setAnnotations(annotations);
+            updateSidebar(annotations);
+            updateUserFilter(annotations);
+            if (selectedAnnotationId === annotation.id) {
+                selectedAnnotationId = null;
+            }
+            console.log('Annotation deleted:', annotation);
+        } catch (error) {
+            console.error('Error deleting annotation:', error);
+            alert(`Failed to delete annotation from server: ${error.message}`);
+        }
+    });
+
+    // Auto-refresh every 30 seconds
+    setInterval(refreshAnnotations, 30000);
+
+    // Initialize
+    loadAnnotations();
+</script>
+</body>
+</html>
