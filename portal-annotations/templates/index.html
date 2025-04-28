@@ -444,19 +444,16 @@
                 version: version
             };
 
-            const request = {
+            const response = await fetch('/api/annotations/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
                 body: JSON.stringify({ user: currentUser, permalink, annotation: updatedAnnotation })
-            };
-            console.error('Save Request Is:', request);
-            const response = await fetch('/api/annotations/', request);
+            });
 
             if (!response.ok) {
-                console.error('Save Response Bad;', response);
                 const error = await response.json();
                 if (error.detail?.includes('conflict')) {
                     alert('Annotation was updated by another user. Please refresh.');
@@ -696,6 +693,11 @@
             return;
         }
         try {
+            console.log('Updating annotation:', JSON.stringify(annotation, null, 2));
+            if (!annotation || !annotation.id || typeof annotation.id !== 'string') {
+                console.error('Invalid annotation ID:', annotation?.id);
+                throw new Error('Annotation ID is missing or invalid');
+            }
             const permalink = getCanonicalPermalink();
             const version = new Date().toISOString();
             const updatedAnnotation = {
@@ -703,9 +705,8 @@
                 creator: { type: 'Person', name: currentUser },
                 version: version
             };
-            console.error('UpdateAnnotation is:', updatedAnnotation);
-
-            const response = await fetch(`/api/annotations/${annotation.id}/`, {
+            console.log('PATCH body:', JSON.stringify({ user: currentUser, permalink, annotation: updatedAnnotation }, null, 2));
+            const response = await fetch(`/api/annotations/${encodeURIComponent(annotation.id)}/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -713,7 +714,20 @@
                 },
                 body: JSON.stringify({ user: currentUser, permalink, annotation: updatedAnnotation })
             });
-            if (!response.ok) throw new Error('Failed to update annotation');
+            if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch {
+                    errorData = { error: 'Unknown server error' };
+                }
+                console.error('Update response:', { status: response.status, errorData });
+                if (errorData.detail?.includes('conflict')) {
+                    alert('Annotation was updated by another user. Please refresh.');
+                    return;
+                }
+                throw new Error(`Failed to update annotation: ${response.status} - ${JSON.stringify(errorData)}`);
+            }
             const annotations = await fetchAnnotations();
             r.setAnnotations(annotations);
             updateSidebar(annotations);
@@ -721,7 +735,7 @@
             console.log('Annotation updated:', updatedAnnotation);
         } catch (error) {
             console.error('Error updating annotation:', error);
-            alert('Failed to update annotation.');
+            alert(`Failed to update annotation: ${error.message}`);
         }
     });
     r.on('deleteAnnotation', async (annotation) => {
@@ -730,7 +744,7 @@
             return;
         }
         try {
-            console.log('Annotation object:', JSON.stringify(annotation, null, 2)); // Debug
+            console.log('Annotation object:', JSON.stringify(annotation, null, 2));
             if (!annotation || !annotation.id || typeof annotation.id !== 'string') {
                 console.error('Invalid annotation ID:', annotation?.id);
                 throw new Error('Annotation ID is missing or invalid');
