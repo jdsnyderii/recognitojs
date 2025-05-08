@@ -12,6 +12,8 @@ services:
       - ./annotations:/app/annotations
       - ./project:/app/project
       - ./annotations.db:/app/annotations.db
+      - ./manage.py:/app/manage.py
+      - ./requirements.txt:/app/requirements.txt
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&

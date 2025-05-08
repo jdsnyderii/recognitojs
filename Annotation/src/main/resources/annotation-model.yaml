@@ -1,0 +1,131 @@
+# annotation/schema/annotation.yaml
+id: https://w3id.org/annotation
+name: web-annotation
+description: Web Annotation Data Model based on W3C specification
+license: MIT
+version: 1.0.0
+
+prefixes:
+  oa: http://www.w3.org/ns/oa#
+  dcterms: http://purl.org/dc/terms/
+  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  xsd: http://www.w3.org/2001/XMLSchema#
+  schema: http://schema.org/
+
+default_prefix: oa
+
+classes:
+  Annotation:
+    description: A Web Annotation
+    slots:
+      - id
+      - type
+      - body
+      - target
+      - creator
+      - version
+    slot_usage:
+      type:
+        pattern: "^Annotation$"
+    class_uri: oa:Annotation
+
+  Body:
+    description: The body of the annotation
+    slots:
+      - type
+      - value
+      - purpose
+    class_uri: oa:Body
+
+  Target:
+    description: The target of the annotation
+    slots:
+      - selector
+    class_uri: oa:Target
+
+  Selector:
+    description: A selector that describes a segment of interest
+    slots:
+      - type
+      - exact
+      - start
+      - end
+    class_uri: oa:Selector
+
+  Creator:
+    description: The agent responsible for creating the annotation
+    slots:
+      - type
+      - name
+    class_uri: schema:Person
+
+slots:
+  id:
+    description: Unique identifier for the annotation
+    identifier: true
+    range: string
+    pattern: "^#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    slot_uri: dcterms:identifier
+
+  type:
+    description: The type of the resource
+    range: string
+    slot_uri: rdf:type
+
+  body:
+    description: The body of the annotation
+    range: Body
+    multivalued: true
+    slot_uri: oa:hasBody
+
+  target:
+    description: The target of the annotation
+    range: Target
+    required: true
+    slot_uri: oa:hasTarget
+
+  selector:
+    description: The selector that identifies the segment of interest
+    range: Selector
+    multivalued: true
+    slot_uri: oa:hasSelector
+
+  value:
+    description: The text content
+    range: string
+    slot_uri: rdf:value
+
+  purpose:
+    description: The purpose of the body
+    range: string
+    slot_uri: oa:hasPurpose
+
+  exact:
+    description: The exact text selected
+    range: string
+    slot_uri: oa:exact
+
+  start:
+    description: The starting position of the selection
+    range: integer
+    slot_uri: oa:start
+
+  end:
+    description: The ending position of the selection
+    range: integer
+    slot_uri: oa:end
+
+  creator:
+    description: The creator of the annotation
+    range: Creator
+    slot_uri: dcterms:creator
+
+  name:
+    description: The name of the creator
+    range: string
+    slot_uri: schema:name
+
+  version:
+    description: The version timestamp of the annotation
+    range: datetime
+    slot_uri: dcterms:modified

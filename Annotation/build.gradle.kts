@@ -1,4 +1,5 @@
 
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
@@ -6,6 +7,11 @@ plugins {
 
 group = "com.acme"
 version = "1.0.0"
+
+var ktorVersion = "2.3.9" // Latest stable, not 3.x as that doesn't exist yet
+var exposedVersion = "0.48.0" // Current version is correct
+var logbackVersion = "1.5.3" // Latest stable from 1.5.x series
+var sqliteVersion = "3.45.1.0" // Latest stable
 
 application {
     mainClass = "io.ktor.server.netty.EngineMain"
@@ -19,11 +25,13 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.netty)
-    implementation(libs.logback.classic)
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.config.yaml)
-    testImplementation(libs.ktor.server.test.host)
-    testImplementation(libs.kotlin.test.junit)
+    implementation("io.ktor:ktor-server-core:${ktorVersion}")
+    implementation("io.ktor:ktor-server-netty:${ktorVersion}")
+    implementation("io.ktor:ktor-server-content-negotiation:${ktorVersion}")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
+    implementation("org.jetbrains.exposed:exposed-core:${exposedVersion}")
+    implementation("org.jetbrains.exposed:exposed-dao:${exposedVersion}")
+    implementation("org.jetbrains.exposed:exposed-jdbc:${exposedVersion}")
+    implementation("org.xerial:sqlite-jdbc:${sqliteVersion}")
+    implementation("ch.qos.logback:logback-classic:${logbackVersion}")
 }
