@@ -3,7 +3,8 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.11 (linkml)" />
   </component>
-  <component name="ProjectRootManager">
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="corretto-21 (2)" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>

@@ -2,7 +2,7 @@
 services:
   app:
     build:
-      context: .
+      context: ./
       dockerfile: Dockerfile
     environment:
       - DJANGO_SECRET_KEY=your-secret-key-change-me

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/recognitojs.iml" filepath="$PROJECT_DIR$/recognitojs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/pyannotation/pyannotation.iml" filepath="$PROJECT_DIR$/pyannotation/pyannotation.iml" />
     </modules>
   </component>
 </project>
